@@ -22,13 +22,15 @@ def main():
     # Convert 3 byte RGB (RRRRRRRR GGGGGGGG BBBBBBBB) to 1 byte RGB (BBB GGG RR)
     for h in range(height):
         for w in range(width):
-            # May have extra data like alpha, 4th value unpack them
+            # May have extra data (e.g. alpha), 4th var stores the rest
+            pix = pixels[w, h]
             r, g, b, _ = (
-                pixels[w, h][0],
-                pixels[w, h][1],
-                pixels[w, h][2],
-                pixels[w, h][3:],
+                pix[0],
+                pix[1],
+                pix[2],
+                pix[3:],
             )
+
             blue = b & 0b11100000
             green = (g >> 3) & 0b11100
             red = (r >> 6) & 0b11

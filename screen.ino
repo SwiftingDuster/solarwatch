@@ -5,9 +5,9 @@ const int SCREEN_W = 96;
 const int SCREEN_H = 64;
 
 const int PLANET_SIZE_X = 32;
-const int PLANET_SIZE_Y = 24;
+const int PLANET_SIZE_Y = 32;
 const int PLANET_X = (SCREEN_W - PLANET_SIZE_X) / 2;
-const int PLANET_Y = 5;
+const int PLANET_Y = 0;
 const int PLANET_NAME_Y = PLANET_Y + PLANET_SIZE_Y + 5;
 
 const int DIVIDER_Y = 48;
@@ -20,12 +20,12 @@ void initScreen() {
   screen.setFlip(true);
 }
 
-void updateDisplay() {
+void updateDisplay(int planetIndex) {
   // Display is 96x64
   //screen.clearScreen();
 
   // Show planets on top
-  drawPlanetMenu();
+  drawPlanetMenu(planetIndex);
 
   // Draw divider
   screen.drawLine(0, DIVIDER_Y, 95, DIVIDER_Y, TS_8b_Yellow);
@@ -34,19 +34,18 @@ void updateDisplay() {
   drawDateTime();
 }
 
-void drawPlanetMenu() {
+void drawPlanetMenu(int planetIndex) {
   // Draw planet
   screen.setX(PLANET_X, PLANET_X + PLANET_SIZE_X - 1);
   screen.setY(PLANET_Y, PLANET_Y + PLANET_SIZE_Y - 1);
   screen.startData();
-  screen.writeBuffer(PIX_SATURN, PLANET_SIZE_X * PLANET_SIZE_Y);
+  screen.writeBuffer(PLANET_DATA[planetIndex], PLANET_SIZE_X * PLANET_SIZE_Y);
   screen.endTransfer();
 
   // Write planet name
-  char planetName[10] = "Saturn";
   char displayBuffer[14];
   strcpy(displayBuffer, "< ");
-  strcat(displayBuffer, planetName);
+  strcat(displayBuffer, PLANET_NAMES[planetIndex]);
   strcat(displayBuffer, " >");
   strcat(displayBuffer, "\0");
   screen.setFont(font10pt);
@@ -87,19 +86,19 @@ char* printZeroPadded(int val) {
   screen.print(val);
 }
 
-const uint8_t prevPlanetBtn = TSButtonLowerLeft;
-const uint8_t nextPlanetBtn = TSButtonLowerRight;
-//const uint8_t topLeftBtn = TSButtonUpperLeft;
-//const uint8_t topRightBtn = TSButtonUpperRight;
-
-void checkButtons() {
-  byte buttons = screen.getButtons();
-  if (buttons) {
-    buttonPress(buttons);
-    Serial.println("Button Click");
+void checkButtons(int* planetIndex) {
+  if (screen.getButtons(TSButtonLowerLeft)) {
+    (*planetIndex)--;
+    if (*planetIndex < 0) {
+      *planetIndex = PLANET_COUNT - 1;
+    }
+    Serial.println("Prev Click");
   }
-}
-
-void buttonPress(uint8_t buttons) {
-
+  if (screen.getButtons(TSButtonLowerRight)) {
+    (*planetIndex)++;
+    if (*planetIndex >= PLANET_COUNT) {
+      *planetIndex = 0;
+    }
+    Serial.println("Next Click");
+  }
 }

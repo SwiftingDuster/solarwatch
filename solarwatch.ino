@@ -13,6 +13,8 @@ double altitude, azimuth;
 TinyScreen screen = TinyScreen(TinyScreenDefault);
 RTCZero rtc;
 
+int planetIndex = 0;
+
 void setup() {
   // Init screen
   Wire.begin();
@@ -56,6 +58,7 @@ void setup() {
 }
 
 void loop() {
-  updateDisplay();
+  checkButtons(&planetIndex);
+  updateDisplay(planetIndex);
   delay(300);
 }
