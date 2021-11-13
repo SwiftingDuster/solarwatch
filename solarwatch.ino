@@ -1,4 +1,7 @@
 #include <SiderealPlanets.h>
+#include <Wire.h>
+#include <TinyScreen.h>
+#include <RTCZero.h>
 
 #define Serial SerialUSB
 
@@ -7,15 +10,31 @@ double latitude, longitude;
 double rightAscension, declination;
 double altitude, azimuth;
 
+TinyScreen screen = TinyScreen(TinyScreenDefault);
+RTCZero rtc;
+
 void setup() {
-  Serial.begin(9600);
-  //delay(2000);
+  // Init screen
+  Wire.begin();
+  screen.begin();
+  screen.setBrightness(10);
+  initScreen();
+
+  // Init real time clock
+  rtc.begin();
+  rtc.setDate(13, 11, 2021 - 2000); // dd/mm/yy
+  rtc.setTime(18, 00, 00);
+
+  // Init serial for debug
+  Serial.begin(115200);
+  delay(2000);
   Serial.println("Starting...");
+  
   astro.begin();
   astro.setTimeZone(8);
   astro.rejectDST();
-  astro.setGMTdate(2021, 11, 11);
-  astro.setLocalTime(23, 15, 0.0);
+  astro.setGMTdate(2021, 11, 13);
+  astro.setLocalTime(17, 00, 0.0); // hh,mm,ss
 
   // Set geographic location to Singapore
   latitude = astro.decimalDegrees(1, 26, 33.f);
@@ -37,5 +56,6 @@ void setup() {
 }
 
 void loop() {
-  while (1);
+  updateDisplay();
+  delay(300);
 }
