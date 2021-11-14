@@ -12,7 +12,6 @@ const int PLANET_NAME_Y = PLANET_Y + PLANET_SIZE_Y + 5;
 
 const int DIVIDER_Y = 48;
 
-const int DATETIME_X = 7;
 const int DATETIME_Y = DIVIDER_Y + 2; // Date/time is two pixels below divider.
 
 void initScreen() {
@@ -64,10 +63,6 @@ void drawPlanetMenu(int planetIndex) {
 }
 
 void drawDateTime() {
-  //screen.clearWindow(DATETIME_X, DATETIME_Y, SCREEN_W - DATETIME_X, SCREEN_H - DATETIME_Y);
-  screen.setFont(font10pt);
-  screen.setCursor(DATETIME_X, DATETIME_Y);
-
   int hours = rtc.getHours();
   int minutes = rtc.getMinutes();
   //int seconds = rtc.getSeconds();
@@ -75,6 +70,9 @@ void drawDateTime() {
   int month = rtc.getMonth();
   int year = rtc.getYear();
 
+  screen.setCursor(7, DATETIME_Y);
+  screen.setFont(font10pt);
+  
   printZeroPadded(hours);
   screen.print(":");
   printZeroPadded(minutes);

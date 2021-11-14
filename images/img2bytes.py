@@ -41,7 +41,11 @@ def main():
     # Print rows of bytes with length equal to image width
     # E.g. A 32x32 image would print 32 bytes/row
     for index, byte in enumerate(hexList):
-        print(hex(byte), end="")
+        if byte < 0x10:
+            # Pad with zero
+            print("0x{:02x}".format(byte), end="")
+        else:
+            print(hex(byte), end="")
         if index < len(hexList) - 1:
             print(", ", end="")
         if index % width == width - 1:
