@@ -34,6 +34,9 @@ void updateDisplay(int planetIndex) {
   drawDateTime();
 }
 
+char displayBuffer[14];
+int lastPlanetNameWidth;
+
 void drawPlanetMenu(int planetIndex) {
   // Draw planet
   screen.setX(PLANET_X, PLANET_X + PLANET_SIZE_X - 1);
@@ -43,15 +46,21 @@ void drawPlanetMenu(int planetIndex) {
   screen.endTransfer();
 
   // Write planet name
-  char displayBuffer[14];
   strcpy(displayBuffer, "< ");
   strcat(displayBuffer, PLANET_NAMES[planetIndex]);
   strcat(displayBuffer, " >");
   strcat(displayBuffer, "\0");
   screen.setFont(font10pt);
-  const int PLANET_NAME_X = (SCREEN_W - screen.getPrintWidth(displayBuffer)) / 2;
+  int printWidth = screen.getPrintWidth(displayBuffer);
+  const int PLANET_NAME_X = (SCREEN_W - printWidth) / 2; // Center name
+  // If taking less space than before, clear the window area first
+  if (printWidth < lastPlanetNameWidth) {
+    screen.clearWindow(0, PLANET_NAME_Y, SCREEN_W, screen.getFontHeight());
+  }
   screen.setCursor(PLANET_NAME_X, PLANET_NAME_Y);
   screen.println(displayBuffer);
+
+  lastPlanetNameWidth = printWidth;
 }
 
 void drawDateTime() {

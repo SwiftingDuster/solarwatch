@@ -24,26 +24,27 @@ def main():
         for w in range(width):
             # May have extra data (e.g. alpha), 4th var stores the rest
             pix = pixels[w, h]
-            r, g, b, _ = (
+            red, green, blue, _ = (
                 pix[0],
                 pix[1],
                 pix[2],
                 pix[3:],
             )
 
-            blue = b & 0b11100000
-            green = (g >> 3) & 0b11100
-            red = (r >> 6) & 0b11
-            byteRGB = blue | green | red
+            b = 0b11100000 & blue
+            g = 0b00011100 & (green >> 3)
+            r = 0b00000011 & (red >> 6)
+
+            byteRGB = b | g | r
             hexList.append(byteRGB)
 
     # Print rows of bytes with length equal to image width
-    # E.g. A 32x24 image would print 32 bytes/row
+    # E.g. A 32x32 image would print 32 bytes/row
     for index, byte in enumerate(hexList):
         print(hex(byte), end="")
         if index < len(hexList) - 1:
             print(", ", end="")
-        if index % 32 == 31:
+        if index % width == width - 1:
             print()
 
     image.close()
