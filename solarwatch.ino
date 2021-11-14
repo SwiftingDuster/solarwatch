@@ -13,8 +13,6 @@ double altitude, azimuth;
 TinyScreen screen = TinyScreen(TinyScreenDefault);
 RTCZero rtc;
 
-int planetIndex = 0;
-
 void setup() {
   // Init screen
   Wire.begin();
@@ -31,7 +29,7 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
   Serial.println("Starting...");
-  
+
   astro.begin();
   astro.setTimeZone(8);
   astro.rejectDST();
@@ -58,7 +56,7 @@ void setup() {
 }
 
 void loop() {
-  checkButtons(&planetIndex);
-  updateDisplay(planetIndex);
+  checkButtons();
+  updateScreen();
   delay(300);
 }
