@@ -10,9 +10,6 @@
 #define Serial SerialUSB
 
 SiderealPlanets astro;
-double latitude, longitude;
-double rightAscension, declination;
-double altitude, azimuth;
 
 TinyScreen screen = TinyScreen(TinyScreenDefault);
 RTCZero rtc;
@@ -33,6 +30,13 @@ int lon2 = 0;
 int lon3 = 0;
 /*------------------------------------------------------------------------------------------*/
 
+typedef struct PlanetData {
+  double altitude;
+  double azimuth;
+} PlanetData;
+
+extern char* PLANET_NAMES[];
+
 void setup() {
   // Init screen
   Wire.begin();
@@ -44,13 +48,13 @@ void setup() {
   rtc.begin();
   rtc.setDate(13, 11, 2021 - 2000);  // dd/mm/yy
   rtc.setTime(18, 00, 00);
-  
+
   // Init bluetooth
   BLEsetup();
 
   // Init serial for debug
   Serial.begin(9600);
-  delay(2000);
+  delay(3000);
   Serial.println("Starting...");
 
   astro.begin();
@@ -60,22 +64,9 @@ void setup() {
   astro.setLocalTime(17, 00, 0.0);  // hh,mm,ss
 
   // Set geographic location to Singapore
-  latitude = astro.decimalDegrees(1, 26, 33.f);
-  longitude = astro.decimalDegrees(103, 47, 54.f);
+  double latitude = astro.decimalDegrees(1, 26, 33.f);
+  double longitude = astro.decimalDegrees(103, 47, 54.f);
   astro.setLatLong(latitude, longitude);
-
-  astro.doJupiter();
-  rightAscension = astro.getRAdec();
-  declination = astro.getDeclinationDec();
-  Serial.println(rightAscension);
-  Serial.println(declination);
-
-  astro.setRAdec(rightAscension, declination);
-  astro.doRAdec2AltAz();
-  altitude = astro.getAltitude();
-  azimuth = astro.getAzimuth();
-  Serial.println(altitude);
-  Serial.println(azimuth);
 }
 
 void loop() {
@@ -88,10 +79,9 @@ void loop() {
 void btConnection() {
   aci_loop();  //Process any ACI commands or events from the NRF8001- main BLE handler, must run often. Keep main loop short.
 
-  //Check if data is available
+  // Check if data is available
   if (ble_rx_buffer_len) {
-    Serial.print("Phone");
-    Serial.print(" : ");
+    Serial.print("Phone : ");
     Serial.println((char*)ble_rx_buffer);
 
     int init_size = strlen(coordinates);
@@ -111,6 +101,37 @@ void btConnection() {
     lon2 = arr[4];
     lon3 = arr[5];
 
+    double latitude = astro.decimalDegrees(lat1, lat2, lat3);
+    double longitude = astro.decimalDegrees(lon1, lon2, lon3);
+    astro.setLatLong(latitude, longitude);
+    Serial.println("Set latitude to: " + (String)latitude);
+    Serial.println("Set longitude to: " + (String)longitude);
+
     ble_rx_buffer_len = 0;  //clear afer reading
   }
+}
+
+PlanetData getPlanetData(int planetIndex) {
+  char* name = PLANET_NAMES[planetIndex];
+  if (strcmp(name, "Mercury") == 0) {
+    astro.doMercury();
+  } else if (strcmp(name, "Venus") == 0) {
+    astro.doMercury();
+  } else if (strcmp(name, "Mars") == 0) {
+    astro.doMercury();
+  } else if (strcmp(name, "Jupiter") == 0) {
+    astro.doJupiter();
+  } else if (strcmp(name, "Saturn") == 0) {
+    astro.doSaturn();
+  }
+  double rightAscension = astro.getRAdec();
+  double declination = astro.getDeclinationDec();
+  astro.setRAdec(rightAscension, declination);
+  
+  astro.doRAdec2AltAz();
+  double altitude = astro.getAltitude();
+  double azimuth = astro.getAzimuth();
+
+  PlanetData data = { altitude, azimuth };
+  return data;
 }

@@ -114,6 +114,11 @@ void drawMenuDateTime() {
 }
 
 void drawPlanetInfo(int planetIndex) {
+  // If planet same as before don't redraw
+  if (planetIndex == lastPlanetIndex && ui == prevUI) return;
+  
+  PlanetData data = getPlanetData(planetIndex);
+
   // Draw planet top left
   drawPlanet(planetIndex, 0, 0, PLANET_SIZE_X, PLANET_SIZE_Y);
   //screen.drawLine(INFO_PLANET_X, INFO_PLANET_Y + PLANET_SIZE_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
@@ -129,13 +134,21 @@ void drawPlanetInfo(int planetIndex) {
   screen.fontColor(TS_8b_Green, TS_8b_Black);
   screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight());
   screen.println("Visible");
+
+  screen.fontColor(TS_8b_White, TS_8b_Black);
+  screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight() + 10);
+  screen.println(data.altitude);
+  screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight() + 20);
+  screen.println(data.azimuth);
+  
+  lastPlanetIndex = planetIndex;
 }
 
 void drawPlanet(int planetIndex, int posX, int posY, int sizeX, int sizeY) {
   screen.setX(posX, posX + sizeX - 1);
   screen.setY(posY, posY + sizeY - 1);
   screen.startData();
-  screen.writeBuffer(PLANET_DATA[planetIndex], PLANET_SIZE_X * PLANET_SIZE_Y);
+  screen.writeBuffer(PLANET_PIXELS[planetIndex], PLANET_SIZE_X * PLANET_SIZE_Y);
   screen.endTransfer();
 }
 

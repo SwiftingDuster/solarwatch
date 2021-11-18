@@ -179,5 +179,5 @@ unsigned char PIX_SATURN[] PROGMEM = {
 };
 
 char* PLANET_NAMES[] = {"Mercury", "Venus", "Mars", "Jupiter", "Saturn"};
-unsigned char* PLANET_DATA[5] = {PIX_MERCURY, PIX_VENUS, PIX_MARS, PIX_JUPITER, PIX_SATURN};
+unsigned char* PLANET_PIXELS[5] = {PIX_MERCURY, PIX_VENUS, PIX_MARS, PIX_JUPITER, PIX_SATURN};
 const int PLANET_COUNT = sizeof(PLANET_NAMES) / sizeof(PLANET_NAMES[0]);
