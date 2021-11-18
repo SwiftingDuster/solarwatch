@@ -17,8 +17,6 @@ double altitude, azimuth;
 TinyScreen screen = TinyScreen(TinyScreenDefault);
 RTCZero rtc;
 
-int planetIndex = 0;
-
 /*Bluetooth------------------------------------------------------------------------------------------*/
 uint8_t ble_rx_buffer[21];
 uint8_t ble_rx_buffer_len = 0;
@@ -36,8 +34,6 @@ int lon3 = 0;
 /*------------------------------------------------------------------------------------------*/
 
 void setup() {
-  BLEsetup();
-
   // Init screen
   Wire.begin();
   screen.begin();
@@ -48,6 +44,9 @@ void setup() {
   rtc.begin();
   rtc.setDate(13, 11, 2021 - 2000);  // dd/mm/yy
   rtc.setTime(18, 00, 00);
+  
+  // Init bluetooth
+  BLEsetup();
 
   // Init serial for debug
   Serial.begin(9600);
