@@ -21,51 +21,17 @@ uint8_t ble_connection_state = false;
 #define PIPE_UART_OVER_BTLE_UART_TX_TX 0
 /*------------------------------------------------------------------------------------------*/
 
+typedef struct DateTime {
+  int year, month, day;
+  int hour, minute, second;
+} DateTime;
+
 typedef struct PlanetData {
   double altitude;
   double azimuth;
 } PlanetData;
 
 extern char* PLANET_NAMES[];
-
-void setup() {
-  // Init serial for debug
-  Serial.begin(9600);
-  delay(3000);
-  Serial.println("Starting...");
-
-  // Init screen
-  Wire.begin();
-  screen.begin();
-  screen.setBrightness(10);
-  initScreen();
-
-  // Init real time clock
-  rtc.begin();
-  rtc.setDate(20, 11, 2021 - 2000);  // dd/mm/yy
-  rtc.setTime(21, 30, 00);
-
-  astro.begin();
-  astro.setTimeZone(8);
-  astro.rejectDST();
-  astro.setGMTdate(2021, 11, 20); // yyyy,MM,dd
-  astro.setLocalTime(21, 30, 0);  // hh,mm,ss
-
-  // Set geographic location to Singapore
-  double latitude = astro.decimalDegrees(1, 26, 33.f);
-  double longitude = astro.decimalDegrees(103, 47, 54.f);
-  astro.setLatLong(latitude, longitude);
-
-  // Init bluetooth
-  BLEsetup();
-}
-
-void loop() {
-  btConnection(); // Poll bluetooth data
-  checkButtons();
-  updateScreen();
-  delay(300);
-}
 
 void btConnection() {
   aci_loop();  //Process any ACI commands or events from the NRF8001- main BLE handler, must run often. Keep main loop short.
@@ -88,30 +54,7 @@ void btConnection() {
   }
 }
 
-void setRTCTime(uint8_t *buffer) {
-  // Expect datetime string in the form "yyyy mm dd hh mm ss". E.g. 2015 03 05 11 48 42
-  int y, M, d, h, m, s;
-  char * next;
-  y = strtol((char *)buffer, &next, 10);
-  M = strtol(next, &next, 10);
-  d = strtol(next, &next, 10);
-  h = strtol(next, &next, 10);
-  m = strtol(next, &next, 10);
-  s = strtol(next, &next, 10);
-  rtc.setTime(h, m, s);
-  rtc.setDate(d, M, y - 2000);
-  setAstroTime(y, M, d, h, m, s);
-  Serial.println("Set date to: " + (String)y + " " + (String)M + " " + (String)d);
-  Serial.println("Set time to: " + (String)h + " " + (String)m + " " + (String)s);
-}
-
-// Set the date and time
-void setAstroTime(int y, int M, int d, int h, int m, int s) {
-  astro.setGMTdate(y, M, d); // yyyy,MM,dd
-  astro.setLocalTime(h, m, s);  // hh,mm,ss
-}
-
-// Set latitude and longtitude
+// Set latitude and longtitude used for SiderealPlanets' calculation.
 void setGeoCoordinate(uint8_t *b) {
   // Expect coordinates string in the form "deg min sec deg min sec" (LAT LONG). E.g. 1 26 33 103 47 54
   char* coordinates = (char*)b;
@@ -138,6 +81,53 @@ void setGeoCoordinate(uint8_t *b) {
   astro.setLatLong(latitude, longitude);
   Serial.println("Set latitude to: " + (String)latitude);
   Serial.println("Set longitude to: " + (String)longitude);
+}
+
+// Set the date and time used for SiderealPlanets' calculation.
+void setAstroTime(DateTime dt, int minuteOffset = 0) {
+  int mins = dt.minute + minuteOffset;
+  if (mins > 59) {
+    dt.hour++;
+    mins %= 60;
+  }
+  bool setD = astro.setGMTdate(dt.year, dt.month, dt.day); // yyyy,MM,dd
+  bool setT = astro.setLocalTime(dt.hour, mins, dt.second);  // hh,mm,ss
+  if (!setD || !setT ) {
+    Serial.println("setAstroTime(): Couldn't set datetime.");
+  }
+  Serial.println((String)dt.year + "/" + (String)dt.month + "/" + (String)dt.day);
+  Serial.println((String)dt.hour + "h:" + (String)mins + "m:" + (String)dt.second);
+}
+
+// Set the date and time on the hardware Real Time Clock.
+void setRTCTime(uint8_t *buffer) {
+  // Expect datetime string in the form "yyyy mm dd hh mm ss". E.g. 2015 03 05 11 48 42
+  int y, M, d, h, m, s;
+  char * next;
+  y = strtol((char *)buffer, &next, 10);
+  M = strtol(next, &next, 10);
+  d = strtol(next, &next, 10);
+  h = strtol(next, &next, 10);
+  m = strtol(next, &next, 10);
+  s = strtol(next, &next, 10);
+  rtc.setTime(h, m, s);
+  rtc.setDate(d, M, y - 2000);
+  DateTime dt = { y, M, d, h, m, s };
+  setAstroTime(dt);
+  Serial.println("Set date to: " + (String)y + " " + (String)M + " " + (String)d);
+  Serial.println("Set time to: " + (String)h + " " + (String)m + " " + (String)s);
+}
+
+// Get datetime of hardware clock.
+DateTime getRTCNow() {
+  int year = rtc.getYear() + 2000;
+  int month = rtc.getMonth();
+  int day = rtc.getDay();
+  int hour = rtc.getHours();
+  int minute = rtc.getMinutes();
+  int second = rtc.getSeconds();
+  DateTime dt = {year, month, day, hour, minute, second};
+  return dt;
 }
 
 PlanetData getPlanetData(int planetIndex) {
@@ -171,4 +161,50 @@ PlanetData getPlanetData(int planetIndex) {
 
   PlanetData data = { altitude, azimuth };
   return data;
+}
+
+void setup() {
+  // Init serial for debug
+  Serial.begin(9600);
+  delay(3000);
+  Serial.println("Starting...");
+
+  // Init screen
+  Wire.begin();
+  screen.begin();
+  screen.setBrightness(10);
+  initScreen();
+
+  const int y = 2021;
+  const int M = 11;
+  const int d = 21;
+  const int h = 1;
+  const int m = 0;
+  const int s = 0;
+
+  // Init real time clock
+  rtc.begin();
+  rtc.setDate(d, M, y - 2000);  // dd/mm/yy
+  rtc.setTime(h, m, s);
+
+  // Init SiderealPlanets
+  astro.begin();
+  astro.setTimeZone(8);
+  astro.rejectDST();
+  setAstroTime(getRTCNow());
+
+  // Set geographic location to Singapore
+  double latitude = astro.decimalDegrees(1, 26, 33.f);
+  double longitude = astro.decimalDegrees(103, 47, 54.f);
+  astro.setLatLong(latitude, longitude);
+
+  // Init bluetooth
+  BLEsetup();
+}
+
+void loop() {
+  btConnection(); // Poll bluetooth data
+  checkButtons();
+  updateScreen();
+  delay(300);
 }

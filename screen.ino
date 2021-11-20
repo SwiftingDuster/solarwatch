@@ -30,9 +30,16 @@ UIState ui;
 UIState prevUI; // Track UI change between screen updates
 int planetIndex = 0; // The active planet displayed in main menu
 
+int lastPlanetIndex = -1; // To check if we should redraw the main menu screen
+int lastPlanetNameWidth = -1; // To check if we should clear the planet name window area
+
+int infoOffsetMins = 0;
+int lastInfoOffsetMins = 0;
+
 void initScreen() {
   screen.clearScreen(); // Same as clearWindow(0,0,96,64)
   screen.setFlip(true);
+  screen.setFont(FONT10_Pixel7);
   ui = MainMenu;
 }
 
@@ -45,7 +52,6 @@ void updateScreen() {
 
   switch (ui) {
     case MainMenu:
-      screen.setFont(FONT10_Pixel7);
       screen.fontColor(TS_8b_White, TS_8b_Black);
       // Show planets on top
       drawMenuPlanet(planetIndex);
@@ -62,9 +68,6 @@ void updateScreen() {
   prevUI = ui;
 }
 
-int lastPlanetIndex = -1;
-int lastPlanetNameWidth = -1;
-
 void drawMenuPlanet(int planetIndex) {
   // If planet same as before don't redraw
   if (planetIndex == lastPlanetIndex && ui == prevUI) return;
@@ -76,14 +79,11 @@ void drawMenuPlanet(int planetIndex) {
   char planetNameDisplay[15];
   ("< " + String(PLANET_NAMES[planetIndex]) + " >").toCharArray(planetNameDisplay, 15);
   int printWidth = screen.getPrintWidth(planetNameDisplay);
-
-  if (printWidth < lastPlanetNameWidth) {
-    // If taking less space than before, clear pixels in the area first
+  if (printWidth < lastPlanetNameWidth) { // If taking less space than before, clear pixels in the area first
     int prevX = (SCREEN_W - lastPlanetNameWidth) / 2;
     screen.clearWindow(prevX, MENU_PLANET_NAME_Y, lastPlanetNameWidth, screen.getFontHeight());
   }
-
-  int planetNameX = (SCREEN_W - printWidth) / 2; // Center name
+  int planetNameX = (SCREEN_W - printWidth) / 2; // Center planet name
   screen.setCursor(planetNameX, MENU_PLANET_NAME_Y);
   screen.println(planetNameDisplay);
 
@@ -92,32 +92,26 @@ void drawMenuPlanet(int planetIndex) {
 }
 
 void drawMenuDateTime() {
-  int hours = rtc.getHours();
-  int minutes = rtc.getMinutes();
-  //int seconds = rtc.getSeconds();
-  int day = rtc.getDay();
-  int month = rtc.getMonth();
-  int year = rtc.getYear();
-
   screen.setCursor(7, MENU_DATETIME_Y);
+  DateTime dt = getRTCNow();
 
-  printZeroPadded(hours);
+  printZeroPadded(dt.hour);
   screen.print(":");
-  printZeroPadded(minutes);
-  //screen.print(":");
-  //printZeroPadded(seconds);
+  printZeroPadded(dt.minute);
   screen.print(" ");
-  printZeroPadded(day);
+  printZeroPadded(dt.day);
   screen.print('/');
-  printZeroPadded(month);
+  printZeroPadded(dt.month);
   screen.print('/');
-  printZeroPadded(year);
+  printZeroPadded(dt.year);
 }
 
 void drawPlanetInfo(int planetIndex) {
   // If planet same as before don't redraw
-  if (planetIndex == lastPlanetIndex && ui == prevUI) return;
+  if (planetIndex == lastPlanetIndex && infoOffsetMins == lastInfoOffsetMins && ui == prevUI) return;
 
+  Serial.println("Draw Planet Info");
+  setAstroTime(getRTCNow(), infoOffsetMins);
   PlanetData data = getPlanetData(planetIndex);
 
   // Draw picture of selected planet
@@ -131,9 +125,10 @@ void drawPlanetInfo(int planetIndex) {
   screen.println("A:" + (String)round(data.azimuth));
   screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y + screen.getFontHeight());
   screen.println("E:" + (String)round(data.altitude));
+  screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y + screen.getFontHeight() * 2);
+  screen.println(infoOffsetMins);
 
   // Write planet name
-  screen.setFont(FONT10_Pixel7);
   screen.fontColor(TS_8b_White, TS_8b_Black);
   int printWidth = screen.getPrintWidth(PLANET_NAMES[planetIndex]);
   int planetNameX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - printWidth) / 2;
@@ -157,6 +152,7 @@ void drawPlanetInfo(int planetIndex) {
   //screen.setCursor(planetNameX, lineY + screen.getFontHeight());
 
   lastPlanetIndex = planetIndex;
+  lastInfoOffsetMins = infoOffsetMins;
 }
 
 void drawPlanet(int planetIndex, int posX, int posY, int sizeX, int sizeY) {
@@ -188,12 +184,31 @@ void prevPlanet() {
   }
 }
 
+void incInfoOffset() {
+  infoOffsetMins += 10;
+  // Offset normally caps at 60
+  // When its 11pm, max offset is the number of 10min intervals without reaching midnight.
+  // E.g. At 11.35pm, max offset is 20.
+  DateTime dt = getRTCNow();
+  if (dt.hour == 23) {
+    int maxOffset = (60 - dt.minute) / 10;
+    if (infoOffsetMins > maxOffset) infoOffsetMins = maxOffset;
+  }
+  else if (infoOffsetMins > 60) infoOffsetMins = 60;
+}
+
+void decInfoOffset() {
+  infoOffsetMins -= 10;
+  if (infoOffsetMins < 0) infoOffsetMins = 0;
+}
+
 void checkButtons() {
   switch (ui) {
     case MainMenu:
       // Select planet
       if (screen.getButtons(TSButtonUpperRight)) {
         ui = PlanetInfo;
+        infoOffsetMins = 0;
         Serial.println("UIState: MainMenu -> PlanetInfo");
       }
       // Left/right planet selection
@@ -210,6 +225,15 @@ void checkButtons() {
       if (screen.getButtons(TSButtonUpperLeft)) {
         ui = MainMenu;
         Serial.println("UIState: PlanetInfo -> MainMenu");
+      }
+      // Time offset
+      if (screen.getButtons(TSButtonLowerLeft)) {
+        decInfoOffset();
+        Serial.println("Planet Info Offset: " + (String)infoOffsetMins);
+      }
+      else if (screen.getButtons(TSButtonLowerRight)) {
+        incInfoOffset();
+        Serial.println("Planet Info Offset: " + (String)infoOffsetMins);
       }
       break;
   }
