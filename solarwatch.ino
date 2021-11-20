@@ -145,9 +145,9 @@ PlanetData getPlanetData(int planetIndex) {
   if (strcmp(name, "Mercury") == 0) {
     astro.doMercury();
   } else if (strcmp(name, "Venus") == 0) {
-    astro.doMercury();
+    astro.doVenus();
   } else if (strcmp(name, "Mars") == 0) {
-    astro.doMercury();
+    astro.doMars();
   } else if (strcmp(name, "Jupiter") == 0) {
     astro.doJupiter();
   } else if (strcmp(name, "Saturn") == 0) {
