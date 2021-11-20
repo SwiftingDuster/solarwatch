@@ -33,7 +33,7 @@ void setup() {
   Serial.begin(9600);
   delay(3000);
   Serial.println("Starting...");
-  
+
   // Init screen
   Wire.begin();
   screen.begin();
@@ -43,13 +43,13 @@ void setup() {
   // Init real time clock
   rtc.begin();
   rtc.setDate(20, 11, 2021 - 2000);  // dd/mm/yy
-  rtc.setTime(16, 30, 00);
+  rtc.setTime(21, 30, 00);
 
   astro.begin();
   astro.setTimeZone(8);
   astro.rejectDST();
   astro.setGMTdate(2021, 11, 20); // yyyy,MM,dd
-  astro.setLocalTime(16, 30, 0);  // hh,mm,ss
+  astro.setLocalTime(21, 30, 0);  // hh,mm,ss
 
   // Set geographic location to Singapore
   double latitude = astro.decimalDegrees(1, 26, 33.f);
@@ -142,16 +142,24 @@ void setGeoCoordinate(uint8_t *b) {
 
 PlanetData getPlanetData(int planetIndex) {
   char* name = PLANET_NAMES[planetIndex];
-  if (strcmp(name, "Mercury") == 0) {
+  if (strcmp(name, "Sun") == 0) {
+    astro.doSun();
+  } else if (strcmp(name, "Mercury") == 0) {
     astro.doMercury();
   } else if (strcmp(name, "Venus") == 0) {
     astro.doVenus();
+  } else if (strcmp(name, "Moon") == 0) {
+    astro.doMoon();
   } else if (strcmp(name, "Mars") == 0) {
     astro.doMars();
   } else if (strcmp(name, "Jupiter") == 0) {
     astro.doJupiter();
   } else if (strcmp(name, "Saturn") == 0) {
     astro.doSaturn();
+  } else if (strcmp(name, "Uranus") == 0) {
+    astro.doUranus();
+  } else if (strcmp(name, "Neptune") == 0) {
+    astro.doNeptune();
   }
   double rightAscension = astro.getRAdec();
   double declination = astro.getDeclinationDec();
