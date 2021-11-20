@@ -20,7 +20,8 @@ const int MENU_DATETIME_Y = MENU_DIVIDER_Y + 2;                   // Position to
 const int INFO_PLANET_X = 0;
 const int INFO_PLANET_Y = 0;
 
-const int INFO_PLANET_NAME_Y = 5;
+const int INFO_PLANET_NAME_Y = 5; // Position to write the planet name
+const int INFO_PLANET_DATA_Y = INFO_PLANET_Y + PLANET_SIZE_Y + 1;
 
 // Interface states
 enum UIState { MainMenu, PlanetInfo };
@@ -116,31 +117,45 @@ void drawMenuDateTime() {
 void drawPlanetInfo(int planetIndex) {
   // If planet same as before don't redraw
   if (planetIndex == lastPlanetIndex && ui == prevUI) return;
-  
+
   PlanetData data = getPlanetData(planetIndex);
 
-  // Draw planet top left
+  // Draw picture of selected planet
   drawPlanet(planetIndex, 0, 0, PLANET_SIZE_X, PLANET_SIZE_Y);
-  //screen.drawLine(INFO_PLANET_X, INFO_PLANET_Y + PLANET_SIZE_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
-  //screen.drawLine(INFO_PLANET_X + PLANET_SIZE_X, INFO_PLANET_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
+  screen.drawLine(INFO_PLANET_X, INFO_PLANET_Y + PLANET_SIZE_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
+  screen.drawLine(INFO_PLANET_X + PLANET_SIZE_X, INFO_PLANET_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
 
-  screen.setFont(FONT8_LibSans);
+  // Write azimuth and altitude below picture
+  screen.fontColor(TS_8b_White, TS_8b_Black);
+  screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y);
+  screen.println("A:" + (String)round(data.azimuth));
+  screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y + screen.getFontHeight());
+  screen.println("E:" + (String)round(data.altitude));
+
+  // Write planet name
+  screen.setFont(FONT10_Pixel7);
   screen.fontColor(TS_8b_White, TS_8b_Black);
   int printWidth = screen.getPrintWidth(PLANET_NAMES[planetIndex]);
   int planetNameX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - printWidth) / 2;
   screen.setCursor(planetNameX, INFO_PLANET_NAME_Y);
   screen.println(PLANET_NAMES[planetIndex]);
 
-  screen.fontColor(TS_8b_Green, TS_8b_Black);
-  screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight());
-  screen.println("Visible");
+  // Draw filled box for planet visibility (above horizon). Green = Visible, Red = Not visible
+  if (data.altitude > 0) {
+    screen.drawRect(planetNameX + printWidth + 2, INFO_PLANET_NAME_Y + 2, 6, 6, TSRectangleFilled, TS_8b_Green);
+  } else {
+    screen.drawRect(planetNameX + printWidth + 2, INFO_PLANET_NAME_Y + 2, 6, 6, TSRectangleFilled, TS_8b_Red);
+  }
 
-  screen.fontColor(TS_8b_White, TS_8b_Black);
-  screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight() + 10);
-  screen.println(data.altitude);
-  screen.setCursor(planetNameX, INFO_PLANET_NAME_Y + screen.getFontHeight() + 20);
-  screen.println(data.azimuth);
-  
+  // Draw seperator under planet name
+  int lineY = INFO_PLANET_NAME_Y + screen.getFontHeight();
+  screen.drawLine(INFO_PLANET_X + PLANET_SIZE_X, lineY , SCREEN_W, lineY, TS_8b_Yellow);
+
+  // Write NSEW direction
+  //screen.fontColor(TS_8b_White, TS_8b_Black);
+  //screen.setCursor(planetNameX, lineY + 1);
+  //screen.setCursor(planetNameX, lineY + screen.getFontHeight());
+
   lastPlanetIndex = planetIndex;
 }
 
