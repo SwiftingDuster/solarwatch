@@ -21,10 +21,10 @@ const int INFO_PLANET_X = 0;
 const int INFO_PLANET_Y = 0;
 
 const int INFO_PLANET_NAME_Y = 3;  // Position to write the planet name
-const int INFO_PLANET_DATA_Y = INFO_PLANET_Y + PLANET_SIZE_Y + 1; // Position to write azimuth and elevation
+const int INFO_PLANET_DATA_Y = INFO_PLANET_Y + PLANET_SIZE_Y + 3; // Position to write azimuth and elevation
 
-const int INFO_NAME_DIVIDER_Y = INFO_PLANET_NAME_Y + 10; // Position of divider line below planet name
-const int INFO_PLANET_DIRECTION_Y = INFO_NAME_DIVIDER_Y + 5;
+const int INFO_NAME_DIVIDER_Y = INFO_PLANET_NAME_Y + 10; // Position to draw divider line below planet name
+const int INFO_PLANET_DIRECTION_Y = INFO_NAME_DIVIDER_Y + 5; // Position to draw direction (NSEW) of planet
 
 // Interface states
 enum UIState { MainMenu, PlanetInfo };
@@ -134,11 +134,13 @@ void drawPlanetInfo(int planetIndex) {
   char datetime[4];
   DateTime dt = getRTCNow();
   if (infoOffsetMins > 0) {
-    if (dt.minute + infoOffsetMins >= 60) {
+    if (dt.minute + infoOffsetMins > 59) {
       dt.hour += 1;
       dt.minute = (dt.minute + infoOffsetMins) % 60;
+    } else {
+      dt.minute = dt.minute + infoOffsetMins;
     }
-    sprintf(datetime, "%02d:%02d (T+%02dm)" , dt.hour, dt.minute + infoOffsetMins, infoOffsetMins);
+    sprintf(datetime, "%02d:%02d (T+%02dm)" , dt.hour, dt.minute, infoOffsetMins);
   }
   else {
     sprintf(datetime, "%02d:%02d" , dt.hour, dt.minute);
