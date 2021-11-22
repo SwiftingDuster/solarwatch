@@ -29,11 +29,14 @@ const int INFO_PLANET_DIRECTION_Y = INFO_NAME_DIVIDER_Y + 5; // Position to draw
 // Interface states
 enum UIState { MainMenu, PlanetInfo };
 
-UIState ui;
-UIState prevUI;       // Track UI change between screen updates
+// Application state
+UIState ui; // The active UI screen
+DateTime dt; // The current datetime, updated every call to updateScreen()
 int planetIndex = 0;  // The active planet displayed in main menu
 int infoOffsetMins = 0; // Postivie offset in minutes used to calculate planet information
 
+UIState prevUI;       // To check if UI screen changed between navigation
+int lastDTMinute = -1; // To check if RTC clock minute changed and we should redraw clock time
 int prevPlanetIndex = -1;      // To check if we should redraw the main menu screen (MainMenu)
 int prevPlanetNameWidth = -1;  // To check if we should clear the planet name window area (Main Menu,  PlanetInfo)
 int prevInfoOffsetMins = 0; // To check if offset changed and a recalculation is needed (PlanetInfo)
@@ -54,10 +57,10 @@ void updateScreen() {
     screen.clearScreen();
   }
 
+  dt = getRTCNow();
+
   switch (ui) {
     case MainMenu:
-      screen.fontColor(TS_8b_White, TS_8b_Black);
-      // Show planets on top
       drawMenuPlanet(planetIndex);
       break;
     case PlanetInfo:
@@ -66,11 +69,12 @@ void updateScreen() {
   }
 
   prevUI = ui;
+  lastDTMinute = dt.minute;
 }
 
 void drawMenuPlanet(int planetIndex) {
   // If planet same as before don't redraw
-  if (planetIndex == prevPlanetIndex && ui == prevUI) return;
+  if (dt.minute == lastDTMinute && planetIndex == prevPlanetIndex && ui == prevUI) return;
 
   int fontHeight = screen.getFontHeight();
 
@@ -78,6 +82,7 @@ void drawMenuPlanet(int planetIndex) {
   drawPlanet(planetIndex, MENU_PLANET_X, MENU_PLANET_Y, PLANET_SIZE_X, PLANET_SIZE_Y);
 
   // Write planet name
+  screen.fontColor(TS_8b_White, TS_8b_Black);
   char planetNameDisplay[15];
   ("< " + String(PLANET_NAMES[planetIndex]) + " >").toCharArray(planetNameDisplay, 15);
   int planetNameWidth = screen.getPrintWidth(planetNameDisplay);
@@ -94,7 +99,6 @@ void drawMenuPlanet(int planetIndex) {
 
   // Show date and time below
   screen.setCursor(1, MENU_DATETIME_Y);
-  DateTime dt = getRTCNow();
   char dtDisplay[17]; // hh:mm dd/MM/yyyy
   sprintf(dtDisplay, "%02d:%02d %02d/%02d/%4d", dt.hour, dt.minute, dt.day, dt.month, dt.year);
   screen.print(dtDisplay);
@@ -110,7 +114,7 @@ void drawPlanetInfo(int planetIndex) {
   int fontHeight = screen.getFontHeight();
 
   Serial.println("Draw Planet Info");
-  setAstroTime(getRTCNow(), infoOffsetMins);
+  setAstroTime(dt, infoOffsetMins);
   PlanetData data = getPlanetData(planetIndex);
 
   // Draw picture of selected planet
@@ -132,18 +136,19 @@ void drawPlanetInfo(int planetIndex) {
   screen.print(altitude);
 
   char datetime[4];
-  DateTime dt = getRTCNow();
+  int hour = dt.hour;
+  int minute = dt.minute;
   if (infoOffsetMins > 0) {
     if (dt.minute + infoOffsetMins > 59) {
-      dt.hour += 1;
-      dt.minute = (dt.minute + infoOffsetMins) % 60;
+      hour += 1;
+      minute = (dt.minute + infoOffsetMins) % 60;
     } else {
-      dt.minute = dt.minute + infoOffsetMins;
+      minute = dt.minute + infoOffsetMins;
     }
-    sprintf(datetime, "%02d:%02d (T+%02dm)" , dt.hour, dt.minute, infoOffsetMins);
+    sprintf(datetime, "%02d:%02d (T+%02dm)" , hour, minute, infoOffsetMins);
   }
   else {
-    sprintf(datetime, "%02d:%02d" , dt.hour, dt.minute);
+    sprintf(datetime, "%02d:%02d" , hour, minute);
   }
   int datetimeWidth = screen.getPrintWidth(datetime);
   if (datetimeWidth < prevDatetimeWidth) { // If taking less space than before, clear pixels in the area first
@@ -181,13 +186,23 @@ void drawPlanetInfo(int planetIndex) {
   screen.setCursor(dirX, INFO_PLANET_DIRECTION_Y);
   screen.print(direction);
 
-  //char elevation[8];
-  //sprintf(elevation, "%.1f", data.altitude);
-  //int elevPrintWidth = screen.getPrintWidth(elevation);
-  //int elevX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - elevPrintWidth) / 2;
-  //screen.fontColor(TS_8b_White, TS_8b_Black);
-  //screen.setCursor(elevX, INFO_PLANET_DIRECTION_Y + fontHeight);
-  //screen.print(elevation);
+  // Write planet rise/set time
+  screen.fontColor(TS_8b_White, TS_8b_Black);
+  int riseMins = (data.rise - floor(data.rise)) * 60;
+  char planetRise[12]; // Rise: hh:mm
+  sprintf(planetRise, "Rise: %02.0f:%02d", data.rise, riseMins);
+  int planetRiseWidth = screen.getPrintWidth(planetRise);
+  int planetRiseX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetRiseWidth) / 2;
+  screen.setCursor(planetRiseX, INFO_PLANET_DIRECTION_Y + fontHeight);
+  screen.print(planetRise);
+
+  int setMins = (data.set - floor(data.set)) * 60;
+  char planetSet[11]; // Set: hh:mm
+  sprintf(planetSet, "Set: %02.0f:%02d", data.set, setMins);
+  int planetSetWidth = screen.getPrintWidth(planetSet);
+  int planetSetX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetSetWidth) / 2;
+  screen.setCursor(planetSetX, INFO_PLANET_DIRECTION_Y + fontHeight * 2);
+  screen.print(planetSet);
 
   prevPlanetIndex = planetIndex;
   prevPlanetNameWidth = planetNameWidth;
@@ -202,38 +217,6 @@ void drawPlanet(int planetIndex, int posX, int posY, int sizeX, int sizeY) {
   screen.startData();
   screen.writeBuffer(PLANET_PIXELS[planetIndex], PLANET_SIZE_X * PLANET_SIZE_Y);
   screen.endTransfer();
-}
-
-char* azimuthToNSEW(double azimuth) {
-  if (azimuth < 0) {
-    do {
-      azimuth += 360;
-    } while (azimuth < 0);
-  } else if (azimuth > 359) {
-    do {
-      azimuth -= 360;
-    } while (azimuth > 359);
-  }
-
-  if (azimuth < 22.5) {  // 0 to 22.4 is North
-    return "North";
-  } else if (azimuth < 67.5) {  // 22.5 to 67.4 is North-East
-    return "North-East";
-  } else if (azimuth < 112.5) {  // 67.5 to 112.4 is East
-    return "East";
-  } else if (azimuth < 157.5) {  // 112.5 to 157.4 is South-East
-    return "South-East";
-  } else if (azimuth < 202.5) {  // 157.5 to 202.4 is South
-    return "South";
-  } else if (azimuth < 247.5) {  // 205.5 to 247.4 is South-West
-    return "South-West";
-  } else if (azimuth < 292.5) {  // 247.5 to 292.4 is West
-    return "West";
-  } else if (azimuth < 337.5) {  // 292.5 to 337.4 is North-West
-    return "North-West";
-  } else {  // 337.5-360 is North
-    return "North";
-  }
 }
 
 void nextPlanet() {
@@ -255,7 +238,6 @@ void incInfoOffset() {
   // Offset normally caps at 60
   // When its 11pm, max offset is the number of 10min intervals without reaching midnight.
   // E.g. At 11.35pm, max offset is 20.
-  DateTime dt = getRTCNow();
   if (dt.hour == 23) {
     int maxOffset = (60 - dt.minute) / 10;
     if (infoOffsetMins > maxOffset) infoOffsetMins = maxOffset;

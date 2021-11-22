@@ -3,9 +3,6 @@
 #include <TinyScreen.h>
 #include <RTCZero.h>
 #include <STBLE.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define Serial SerialUSB
 
@@ -27,11 +24,12 @@ typedef struct DateTime {
 } DateTime;
 
 typedef struct PlanetData {
-  double altitude;
-  double azimuth;
+  double altitude, azimuth;
+  double rise, set; // In hours since midnight
 } PlanetData;
 
 extern char* PLANET_NAMES[];
+extern int prevPlanetIndex;
 
 void btConnection() {
   aci_loop();  //Process any ACI commands or events from the NRF8001- main BLE handler, must run often. Keep main loop short.
@@ -114,6 +112,7 @@ void setRTCTime(uint8_t *buffer) {
   rtc.setDate(d, M, y - 2000);
   DateTime dt = { y, M, d, h, m, s };
   setAstroTime(dt);
+  prevPlanetIndex = -1; // Triggers redraw on main menu
   Serial.println("Set date to: " + (String)y + " " + (String)M + " " + (String)d);
   Serial.println("Set time to: " + (String)h + " " + (String)m + " " + (String)s);
 }
@@ -151,16 +150,56 @@ PlanetData getPlanetData(int planetIndex) {
   } else if (strcmp(name, "Neptune") == 0) {
     astro.doNeptune();
   }
-  double rightAscension = astro.getRAdec();
-  double declination = astro.getDeclinationDec();
-  astro.setRAdec(rightAscension, declination);
+
+  //double rightAscension = astro.getRAdec();
+  //double declination = astro.getDeclinationDec();
+  //astro.setRAdec(rightAscension, declination);
 
   astro.doRAdec2AltAz();
   double altitude = astro.getAltitude();
   double azimuth = astro.getAzimuth();
 
-  PlanetData data = { altitude, azimuth };
+  astro.doRiseSetTimes(0.0);
+  double rise = astro.getRiseTime();
+  double set = astro.getSetTime();
+
+  Serial.println(rise);
+  Serial.println(set);
+
+  PlanetData data = { altitude, azimuth, rise, set };
   return data;
+}
+
+char* azimuthToNSEW(double azimuth) {
+  if (azimuth < 0) {
+    do {
+      azimuth += 360;
+    } while (azimuth < 0);
+  } else if (azimuth > 359) {
+    do {
+      azimuth -= 360;
+    } while (azimuth > 359);
+  }
+
+  if (azimuth < 22.5) {  // 0 to 22.4 is North
+    return "North";
+  } else if (azimuth < 67.5) {  // 22.5 to 67.4 is North-East
+    return "North-East";
+  } else if (azimuth < 112.5) {  // 67.5 to 112.4 is East
+    return "East";
+  } else if (azimuth < 157.5) {  // 112.5 to 157.4 is South-East
+    return "South-East";
+  } else if (azimuth < 202.5) {  // 157.5 to 202.4 is South
+    return "South";
+  } else if (azimuth < 247.5) {  // 205.5 to 247.4 is South-West
+    return "South-West";
+  } else if (azimuth < 292.5) {  // 247.5 to 292.4 is West
+    return "West";
+  } else if (azimuth < 337.5) {  // 292.5 to 337.4 is North-West
+    return "North-West";
+  } else {  // 337.5-360 is North
+    return "North";
+  }
 }
 
 void setup() {
