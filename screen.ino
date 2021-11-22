@@ -92,7 +92,7 @@ void drawMenuPlanet(int planetIndex) {
 }
 
 void drawMenuDateTime() {
-  screen.setCursor(7, MENU_DATETIME_Y);
+  screen.setCursor(SCREEN_W * 0.02, MENU_DATETIME_Y);
   DateTime dt = getRTCNow();
 
   printZeroPadded(dt.hour);
