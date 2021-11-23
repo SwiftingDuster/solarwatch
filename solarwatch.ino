@@ -163,9 +163,6 @@ PlanetData getPlanetData(int planetIndex) {
   double rise = astro.getRiseTime();
   double set = astro.getSetTime();
 
-  Serial.println(rise);
-  Serial.println(set);
-
   PlanetData data = { altitude, azimuth, rise, set };
   return data;
 }
@@ -216,9 +213,9 @@ void setup() {
 
   const int y = 2021;
   const int M = 11;
-  const int d = 22;
-  const int h = 19;
-  const int m = 0;
+  const int d = 23;
+  const int h = 9;
+  const int m = 30;
   const int s = 0;
 
   // Init real time clock

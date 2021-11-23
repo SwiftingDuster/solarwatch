@@ -73,7 +73,7 @@ void updateScreen() {
 }
 
 void drawMenuPlanet(int planetIndex) {
-  // If planet same as before don't redraw
+  // If no changes to UI don't redraw
   if (dt.minute == lastDTMinute && planetIndex == prevPlanetIndex && ui == prevUI) return;
 
   int fontHeight = screen.getFontHeight();
@@ -108,8 +108,8 @@ void drawMenuPlanet(int planetIndex) {
 }
 
 void drawPlanetInfo(int planetIndex) {
-  // If planet same as before don't redraw
-  if (planetIndex == prevPlanetIndex && infoOffsetMins == prevInfoOffsetMins && ui == prevUI) return;
+  // If no changes to UI don't redraw
+  if (dt.minute == lastDTMinute && infoOffsetMins == prevInfoOffsetMins && ui == prevUI) return;
 
   int fontHeight = screen.getFontHeight();
 
@@ -122,7 +122,7 @@ void drawPlanetInfo(int planetIndex) {
   screen.drawLine(INFO_PLANET_X, INFO_PLANET_Y + PLANET_SIZE_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
   screen.drawLine(INFO_PLANET_X + PLANET_SIZE_X, INFO_PLANET_Y, PLANET_SIZE_X, PLANET_SIZE_Y, TS_8b_Yellow);
 
-  // Write azimuth and altitude below picture
+  // Write azimuth, altitude and current time below picture
   screen.fontColor(TS_8b_White, TS_8b_Black);
 
   char azimuth[6];
@@ -158,9 +158,9 @@ void drawPlanetInfo(int planetIndex) {
   screen.print(datetime);
 
   // Write planet name
-  screen.fontColor(TS_8b_White, TS_8b_Black);
   int planetNameWidth = screen.getPrintWidth(PLANET_NAMES[planetIndex]);
   int planetNameX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetNameWidth) / 2;
+  screen.fontColor(TS_8b_White, TS_8b_Black);
   screen.setCursor(planetNameX, INFO_PLANET_NAME_Y);
   screen.print(PLANET_NAMES[planetIndex]);
 
@@ -182,12 +182,20 @@ void drawPlanetInfo(int planetIndex) {
     screen.clearWindow(prevX, INFO_PLANET_DIRECTION_Y, prevDirectionWidth, fontHeight);
   }
   int dirX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - directionWidth) / 2;
-  screen.fontColor(TS_8b_Green, TS_8b_Black);
+  if (data.altitude > 0) {
+    screen.fontColor(TS_8b_Green, TS_8b_Black);
+  } else {
+    screen.fontColor(TS_8b_Red, TS_8b_Black);
+  }
   screen.setCursor(dirX, INFO_PLANET_DIRECTION_Y);
   screen.print(direction);
 
   // Write planet rise/set time
-  screen.fontColor(TS_8b_White, TS_8b_Black);
+  if (data.altitude > 0) {
+    screen.fontColor(TS_8b_Gray, TS_8b_Black);
+  } else {
+    screen.fontColor(TS_8b_White, TS_8b_Black);
+  }
   int riseMins = (data.rise - floor(data.rise)) * 60;
   char planetRise[12]; // Rise: hh:mm
   sprintf(planetRise, "Rise: %02.0f:%02d", data.rise, riseMins);
@@ -196,9 +204,14 @@ void drawPlanetInfo(int planetIndex) {
   screen.setCursor(planetRiseX, INFO_PLANET_DIRECTION_Y + fontHeight);
   screen.print(planetRise);
 
+  if (data.altitude > 0) {
+    screen.fontColor(TS_8b_White, TS_8b_Black);
+  } else {
+    screen.fontColor(TS_8b_Gray, TS_8b_Black);
+  }
   int setMins = (data.set - floor(data.set)) * 60;
-  char planetSet[11]; // Set: hh:mm
-  sprintf(planetSet, "Set: %02.0f:%02d", data.set, setMins);
+  char planetSet[12]; // Set: hh:mm
+  sprintf(planetSet, "Set:  %02.0f:%02d", data.set, setMins);
   int planetSetWidth = screen.getPrintWidth(planetSet);
   int planetSetX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetSetWidth) / 2;
   screen.setCursor(planetSetX, INFO_PLANET_DIRECTION_Y + fontHeight * 2);
