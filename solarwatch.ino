@@ -84,7 +84,7 @@ void setGeoCoordinate(uint8_t *b) {
   Serial.println("Set longitude to: " + (String)longitude);
 }
 
-// Set the date and time used for SiderealPlanets' calculation.
+// Set the date and time used by SiderealPlanets for star/planet calculations.
 void setAstroTime(DateTime dt, int minuteOffset = 0) {
   int mins = dt.minute + minuteOffset;
   if (mins > 59) {
@@ -96,8 +96,8 @@ void setAstroTime(DateTime dt, int minuteOffset = 0) {
   if (!setD || !setT ) {
     Serial.println("setAstroTime(): Couldn't set datetime.");
   }
-  Serial.println((String)dt.year + "/" + (String)dt.month + "/" + (String)dt.day);
-  Serial.println((String)dt.hour + "h:" + (String)mins + "m:" + (String)dt.second);
+  //Serial.println("Set astro date: " + (String)dt.year + "/" + (String)dt.month + "/" + (String)dt.day);
+  //Serial.println("Set astro time: " + (String)dt.hour + ":" + (String)mins + ":" + (String)dt.second);
 }
 
 // Set the date and time on the hardware Real Time Clock.
@@ -157,9 +157,9 @@ PlanetData getPlanetData(int planetIndex) {
 
   // Converts from equatorial coordinate system to horizontal coordinate system
   // Use Right Ascension and Declination to calculate Altitude and Azimuth
-  // Altitude is the angle of elevation, 0 being horizon.
-  // Azimuth is similar to compass bearings (0-359), 0 being North.
   astro.doRAdec2AltAz();
+  // Altitude is the angle of elevation, 0 being horizon.
+  // Azimuth is similar to compass bearings (0-359), 0 being True North.
   double altitude = astro.getAltitude();
   double azimuth = astro.getAzimuth();
 

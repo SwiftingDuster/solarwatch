@@ -196,13 +196,17 @@ void drawPlanetInfo(int planetIndex) {
   screen.setCursor(dirX, INFO_PLANET_DIRECTION_Y);
   screen.print(direction);
 
-  // Write planet rise/set time
-  if (data.altitude > 0) {
-    screen.fontColor(TS_8b_Gray, TS_8b_Black);
-  } else {
+  // Write planet's rise/set time (current day)
+  // If currently below horizon but rises later in the day, highlight rising time.
+  // If currently above horizon highlight setting time.
+  // If currently below horizon and will not rise anymore today, highlight neither.
+  int riseHour = floor(data.rise);
+  int riseMins = (data.rise - riseHour) * 60; // Convert decimal hours to minutes
+  if (data.altitude < 0 && dt.hour < riseHour && dt.minute < riseMins) {
     screen.fontColor(TS_8b_White, TS_8b_Black);
+  } else {
+    screen.fontColor(TS_8b_Gray, TS_8b_Black);
   }
-  int riseMins = (data.rise - floor(data.rise)) * 60;
   char planetRise[12]; // Rise: hh:mm
   sprintf(planetRise, "Rise: %02.0f:%02d", floor(data.rise), riseMins);
   int planetRiseWidth = screen.getPrintWidth(planetRise);
