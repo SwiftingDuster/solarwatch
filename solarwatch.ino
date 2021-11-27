@@ -11,12 +11,11 @@ SiderealPlanets astro;
 TinyScreen screen = TinyScreen(TinyScreenDefault);
 RTCZero rtc;
 
-/*Bluetooth------------------------------------------------------------------------------------------*/
+// Bluetooth
 uint8_t ble_rx_buffer[21];
 uint8_t ble_rx_buffer_len = 0;
 uint8_t ble_connection_state = false;
 #define PIPE_UART_OVER_BTLE_UART_TX_TX 0
-/*------------------------------------------------------------------------------------------*/
 
 typedef struct DateTime {
   int year, month, day;
@@ -28,11 +27,13 @@ typedef struct PlanetData {
   double rise, set; // In hours since midnight
 } PlanetData;
 
+// Defined in planetdata.ino
 extern char* PLANET_NAMES[];
 extern int prevPlanetIndex;
 
-void btConnection() {
-  aci_loop();  //Process any ACI commands or events from the NRF8001- main BLE handler, must run often. Keep main loop short.
+void pollBluetooth() {
+  //Process any ACI commands or events from the NRF8001- main BLE handler, must run often. Keep main loop short.
+  aci_loop();
 
   // Check if data is available
   if (ble_rx_buffer_len) {
@@ -48,13 +49,15 @@ void btConnection() {
       setGeoCoordinate(ble_rx_buffer + 1);
     }
 
-    ble_rx_buffer_len = 0;  //clear afer reading
+    // Clear buffer afer reading
+    ble_rx_buffer_len = 0;
   }
 }
 
 // Set latitude and longtitude used for SiderealPlanets' calculation.
 void setGeoCoordinate(uint8_t *b) {
-  // Expect coordinates string in the form "deg min sec deg min sec" (LAT LONG). E.g. 1 26 33 103 47 54
+  // Expect coordinates string in the form "deg min sec deg min sec" (LAT LONG).
+  // E.g. "1 27 15 103 46 40" is the representation of 1°27'15"N, 103°46'40"E
   char* coordinates = (char*)b;
 
   int init_size = strlen(coordinates);
@@ -117,7 +120,7 @@ void setRTCTime(uint8_t *buffer) {
   Serial.println("Set time to: " + (String)h + " " + (String)m + " " + (String)s);
 }
 
-// Get datetime of hardware clock.
+// Get current datetime of hardware clock.
 DateTime getRTCNow() {
   int year = rtc.getYear() + 2000;
   int month = rtc.getMonth();
@@ -128,6 +131,7 @@ DateTime getRTCNow() {
   DateTime dt = {year, month, day, hour, minute, second};
   return dt;
 }
+
 
 PlanetData getPlanetData(int planetIndex) {
   char* name = PLANET_NAMES[planetIndex];
@@ -167,7 +171,9 @@ PlanetData getPlanetData(int planetIndex) {
   return data;
 }
 
+// Returns a direction (N/S/E/W) given azimuth.
 char* azimuthToNSEW(double azimuth) {
+  // Validate azimuth if value is invalid.
   if (azimuth < 0) {
     do {
       azimuth += 360;
@@ -211,11 +217,12 @@ void setup() {
   screen.setBrightness(10);
   initScreen();
 
+  // Default time on startup
   const int y = 2021;
   const int M = 11;
-  const int d = 23;
-  const int h = 9;
-  const int m = 30;
+  const int d = 27;
+  const int h = 20;
+  const int m = 0;
   const int s = 0;
 
   // Init real time clock
@@ -229,7 +236,8 @@ void setup() {
   astro.rejectDST();
   setAstroTime(getRTCNow());
 
-  // Set geographic location to Singapore
+  // Set default geographic location
+  // 1 27 15 103 46 40
   double latitude = astro.decimalDegrees(1, 26, 33.f);
   double longitude = astro.decimalDegrees(103, 47, 54.f);
   astro.setLatLong(latitude, longitude);
@@ -239,7 +247,7 @@ void setup() {
 }
 
 void loop() {
-  btConnection(); // Poll bluetooth data
+  pollBluetooth();
   checkButtons();
   updateScreen();
   delay(300);

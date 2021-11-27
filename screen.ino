@@ -1,6 +1,6 @@
 const FONT_INFO& FONT10_Pixel7 = thinPixel7_10ptFontInfo;
-const FONT_INFO& FONT8_LibSans = liberationSansNarrow_8ptFontInfo;
 
+// TinyScreen Resolution
 const int SCREEN_W = 96;
 const int SCREEN_H = 64;
 
@@ -20,36 +20,38 @@ const int MENU_DATETIME_Y = MENU_DIVIDER_Y + 2;                    // Position t
 const int INFO_PLANET_X = 0;
 const int INFO_PLANET_Y = 0;
 
-const int INFO_PLANET_NAME_Y = 3;  // Position to write the planet name
-const int INFO_PLANET_DATA_Y = INFO_PLANET_Y + PLANET_SIZE_Y + 3; // Position to write azimuth and elevation
+const int INFO_PLANET_NAME_Y = 3;                                  // Position to write the planet name
+const int INFO_PLANET_DATA_Y = INFO_PLANET_Y + PLANET_SIZE_Y + 3;  // Position to write azimuth and elevation
 
-const int INFO_NAME_DIVIDER_Y = INFO_PLANET_NAME_Y + 10; // Position to draw divider line below planet name
-const int INFO_PLANET_DIRECTION_Y = INFO_NAME_DIVIDER_Y + 5; // Position to draw direction (NSEW) of planet
+const int INFO_NAME_DIVIDER_Y = INFO_PLANET_NAME_Y + 10;           // Position to draw divider line below planet name
+const int INFO_PLANET_DIRECTION_Y = INFO_NAME_DIVIDER_Y + 5;       // Position to draw direction (NSEW) of planet
 
 // Interface states
 enum UIState { MainMenu, PlanetInfo };
 
 // Application state
-UIState ui; // The active UI screen
-DateTime dt; // The current datetime, updated every call to updateScreen()
-int planetIndex = 0;  // The active planet displayed in main menu
-int infoOffsetMins = 0; // Postivie offset in minutes used to calculate planet information
+UIState ui;                 // The active UI screen
+DateTime dt;                // The current datetime, updated every call to updateScreen()
+int planetIndex = 0;        // The active planet displayed in main menu
+int infoOffsetMins = 0;     // Postivie offset in minutes used to calculate planet information
 
-UIState prevUI;       // To check if UI screen changed between navigation
-int lastDTMinute = -1; // To check if RTC clock minute changed and we should redraw clock time
-int prevPlanetIndex = -1;      // To check if we should redraw the main menu screen (MainMenu)
-int prevPlanetNameWidth = -1;  // To check if we should clear the planet name window area (Main Menu,  PlanetInfo)
-int prevInfoOffsetMins = 0; // To check if offset changed and a recalculation is needed (PlanetInfo)
+UIState prevUI;               // To check if UI screen changed between navigation
+int lastDTMinute = -1;        // To check if RTC clock minute changed and we should redraw clock time (Main Menu,  PlanetInfo)
+int prevPlanetIndex = -1;     // To check if we should redraw the main menu screen (MainMenu)
+int prevPlanetNameWidth = -1; // To check if we should clear the planet name window area (Main Menu,  PlanetInfo)
+int prevInfoOffsetMins = 0;   // To check if offset changed and a recalculation is needed (PlanetInfo)
 int prevDirectionWidth = -1;  // To check if we should clear the planet name window area (PlanetInfo)
-int prevDatetimeWidth = -1;  // To check if we should clear the date/time window area (PlanetInfo)
+int prevDatetimeWidth = -1;   // To check if we should clear the date/time window area (PlanetInfo)
 
+// Initialize TinyScreen
 void initScreen() {
-  screen.clearScreen();  // Same as clearWindow(0,0,96,64)
+  screen.clearScreen();
   screen.setFlip(true);
   screen.setFont(FONT10_Pixel7);
   ui = MainMenu;
 }
 
+// Update the UI
 void updateScreen() {
   // Display is 96x64
 
@@ -86,7 +88,8 @@ void drawMenuPlanet(int planetIndex) {
   char planetNameDisplay[15];
   ("< " + String(PLANET_NAMES[planetIndex]) + " >").toCharArray(planetNameDisplay, 15);
   int planetNameWidth = screen.getPrintWidth(planetNameDisplay);
-  if (planetNameWidth < prevPlanetNameWidth) {  // If taking less space than before, clear pixels in the area first
+  if (planetNameWidth < prevPlanetNameWidth) {
+    // If taking less space than before, clear pixels in the area first
     int prevX = (SCREEN_W - prevPlanetNameWidth) / 2;
     screen.clearWindow(prevX, MENU_PLANET_NAME_Y, prevPlanetNameWidth, fontHeight);
   }
@@ -113,7 +116,7 @@ void drawPlanetInfo(int planetIndex) {
 
   int fontHeight = screen.getFontHeight();
 
-  Serial.println("Draw Planet Info");
+  // Set the datetime used and retrieve planet data
   setAstroTime(dt, infoOffsetMins);
   PlanetData data = getPlanetData(planetIndex);
 
@@ -135,10 +138,11 @@ void drawPlanetInfo(int planetIndex) {
   screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y + fontHeight);
   screen.print(altitude);
 
-  char datetime[4];
+  char datetime[12];
   int hour = dt.hour;
   int minute = dt.minute;
   if (infoOffsetMins > 0) {
+    // Print datetime with time offset in minutes.
     if (dt.minute + infoOffsetMins > 59) {
       hour += 1;
       minute = (dt.minute + infoOffsetMins) % 60;
@@ -148,10 +152,12 @@ void drawPlanetInfo(int planetIndex) {
     sprintf(datetime, "%02d:%02d (T+%02dm)" , hour, minute, infoOffsetMins);
   }
   else {
+    // Print only datetime if there is no time offset.
     sprintf(datetime, "%02d:%02d" , hour, minute);
   }
   int datetimeWidth = screen.getPrintWidth(datetime);
-  if (datetimeWidth < prevDatetimeWidth) { // If taking less space than before, clear pixels in the area first
+  if (datetimeWidth < prevDatetimeWidth) {
+    // If taking less space than before, clear pixels in the area first
     screen.clearWindow(INFO_PLANET_X, INFO_PLANET_DATA_Y + fontHeight * 2, prevDatetimeWidth, fontHeight);
   }
   screen.setCursor(INFO_PLANET_X, INFO_PLANET_DATA_Y + fontHeight * 2);
@@ -217,6 +223,7 @@ void drawPlanetInfo(int planetIndex) {
   screen.setCursor(planetSetX, INFO_PLANET_DIRECTION_Y + fontHeight * 2);
   screen.print(planetSet);
 
+  // Variables used to track state changes
   prevPlanetIndex = planetIndex;
   prevPlanetNameWidth = planetNameWidth;
   prevDirectionWidth = directionWidth;
@@ -224,6 +231,7 @@ void drawPlanetInfo(int planetIndex) {
   prevInfoOffsetMins = infoOffsetMins;
 }
 
+// Draw the image of a planet on screen at specified coordinates and size.
 void drawPlanet(int planetIndex, int posX, int posY, int sizeX, int sizeY) {
   screen.setX(posX, posX + sizeX - 1);
   screen.setY(posY, posY + sizeY - 1);
@@ -232,6 +240,7 @@ void drawPlanet(int planetIndex, int posX, int posY, int sizeX, int sizeY) {
   screen.endTransfer();
 }
 
+// Next planet button
 void nextPlanet() {
   planetIndex++;
   if (planetIndex >= PLANET_COUNT) {
@@ -239,6 +248,7 @@ void nextPlanet() {
   }
 }
 
+// Previous planet button
 void prevPlanet() {
   planetIndex--;
   if (planetIndex < 0) {
@@ -246,6 +256,7 @@ void prevPlanet() {
   }
 }
 
+// Increase time offset in 10 minute intervals, up to 60 minutes.
 void incInfoOffset() {
   infoOffsetMins += 10;
   // Offset normally caps at 60
@@ -258,11 +269,13 @@ void incInfoOffset() {
     infoOffsetMins = 60;
 }
 
+// Decrease time offset in 10 minute intervals, down to zero.
 void decInfoOffset() {
   infoOffsetMins -= 10;
   if (infoOffsetMins < 0) infoOffsetMins = 0;
 }
 
+// Check for button pressed and set application state accordingly.
 void checkButtons() {
   switch (ui) {
     case MainMenu:
@@ -282,6 +295,7 @@ void checkButtons() {
       }
       break;
     case PlanetInfo:
+      // Back to main menu
       if (screen.getButtons(TSButtonUpperLeft)) {
         ui = MainMenu;
         Serial.println("UIState: PlanetInfo -> MainMenu");

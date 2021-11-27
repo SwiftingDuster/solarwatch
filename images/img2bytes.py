@@ -3,6 +3,9 @@ import sys
 
 from PIL import Image
 
+# This python script reads a 24bit RGB image and converts every pixel to 8 bit RGB.
+# Outputs a comma seperated list of hexadecimal values each representing a pixel.
+# i.e. Every pixel converted from 3 bytes (RRRRRRRR GGGGGGGG BBBBBBBB) to 1 byte (BBBG GGRR)
 
 def main():
     if len(sys.argv) > 1:
@@ -39,7 +42,7 @@ def main():
             hexList.append(byteRGB)
 
     # Print rows of bytes with length equal to image width
-    # E.g. A 32x32 image would print 32 bytes/row
+    # E.g. A 32x24 image would print 32 bytes/row for 24 rows
     for index, byte in enumerate(hexList):
         if byte < 0x10:
             # Pad with zero
