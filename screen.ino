@@ -204,7 +204,7 @@ void drawPlanetInfo(int planetIndex) {
   }
   int riseMins = (data.rise - floor(data.rise)) * 60;
   char planetRise[12]; // Rise: hh:mm
-  sprintf(planetRise, "Rise: %02.0f:%02d", data.rise, riseMins);
+  sprintf(planetRise, "Rise: %02.0f:%02d", floor(data.rise), riseMins);
   int planetRiseWidth = screen.getPrintWidth(planetRise);
   int planetRiseX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetRiseWidth) / 2;
   screen.setCursor(planetRiseX, INFO_PLANET_DIRECTION_Y + fontHeight);
@@ -217,7 +217,7 @@ void drawPlanetInfo(int planetIndex) {
   }
   int setMins = (data.set - floor(data.set)) * 60;
   char planetSet[12]; // Set: hh:mm
-  sprintf(planetSet, "Set:  %02.0f:%02d", data.set, setMins);
+  sprintf(planetSet, "Set:  %02.0f:%02d", floor(data.set), setMins);
   int planetSetWidth = screen.getPrintWidth(planetSet);
   int planetSetX = PLANET_SIZE_X + (SCREEN_W - PLANET_SIZE_X - planetSetWidth) / 2;
   screen.setCursor(planetSetX, INFO_PLANET_DIRECTION_Y + fontHeight * 2);

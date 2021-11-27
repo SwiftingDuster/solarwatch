@@ -23,8 +23,8 @@ typedef struct DateTime {
 } DateTime;
 
 typedef struct PlanetData {
-  double altitude, azimuth;
-  double rise, set; // In hours since midnight
+  double altitude, azimuth; // See: https://en.wikipedia.org/wiki/Horizontal_coordinate_system
+  double rise, set;         // In hours since midnight
 } PlanetData;
 
 // Defined in planetdata.ino
@@ -155,17 +155,28 @@ PlanetData getPlanetData(int planetIndex) {
     astro.doNeptune();
   }
 
-  //double rightAscension = astro.getRAdec();
-  //double declination = astro.getDeclinationDec();
-  //astro.setRAdec(rightAscension, declination);
-
+  // Converts from equatorial coordinate system to horizontal coordinate system
+  // Use Right Ascension and Declination to calculate Altitude and Azimuth
+  // Altitude is the angle of elevation, 0 being horizon.
+  // Azimuth is similar to compass bearings (0-359), 0 being North.
   astro.doRAdec2AltAz();
   double altitude = astro.getAltitude();
   double azimuth = astro.getAzimuth();
 
-  astro.doRiseSetTimes(0.0);
-  double rise = astro.getRiseTime();
-  double set = astro.getSetTime();
+  double rise, set;
+  if (strcmp(name, "Sun") == 0) {
+    astro.doSunRiseSetTimes();
+    rise = astro.getSunriseTime();
+    set = astro.getSunsetTime();
+  } else if (strcmp(name, "Moon") == 0) {
+    astro.doMoonRiseSetTimes();
+    rise = astro.getMoonriseTime();
+    set = astro.getMoonsetTime();
+  } else {
+    astro.doRiseSetTimes(0.0);
+    rise = astro.getRiseTime();
+    set = astro.getSetTime();
+  }
 
   PlanetData data = { altitude, azimuth, rise, set };
   return data;
@@ -184,9 +195,9 @@ char* azimuthToNSEW(double azimuth) {
     } while (azimuth > 359);
   }
 
-  if (azimuth < 22.5) {  // 0 to 22.4 is North
+  if (azimuth < 22.5) {          // 0 to 22.4 is North
     return "North";
-  } else if (azimuth < 67.5) {  // 22.5 to 67.4 is North-East
+  } else if (azimuth < 67.5) {   // 22.5 to 67.4 is North-East
     return "North-East";
   } else if (azimuth < 112.5) {  // 67.5 to 112.4 is East
     return "East";
@@ -200,7 +211,7 @@ char* azimuthToNSEW(double azimuth) {
     return "West";
   } else if (azimuth < 337.5) {  // 292.5 to 337.4 is North-West
     return "North-West";
-  } else {  // 337.5-360 is North
+  } else {                       // 337.5-360 is North
     return "North";
   }
 }
