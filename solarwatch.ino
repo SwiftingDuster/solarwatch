@@ -231,9 +231,9 @@ void setup() {
   // Default time on startup
   const int y = 2021;
   const int M = 11;
-  const int d = 27;
-  const int h = 20;
-  const int m = 0;
+  const int d = 29;
+  const int h = 10;
+  const int m = 30;
   const int s = 0;
 
   // Init real time clock
@@ -248,9 +248,15 @@ void setup() {
   setAstroTime(getRTCNow());
 
   // Set default geographic location
-  // 1 27 15 103 46 40
-  double latitude = astro.decimalDegrees(1, 26, 33.f);
-  double longitude = astro.decimalDegrees(103, 47, 54.f);
+  
+  // Woodlands Waterfront: 1°27'15"N 103°46'40"E
+  // double latitude = astro.decimalDegrees(1, 27, 15.f);
+  // double longitude = astro.decimalDegrees(103, 46, 40.f);
+  
+  // SIT@NYP: 1°22'38"N 103°50'55"E
+  double latitude = astro.decimalDegrees(1, 22, 38.f);
+  double longitude = astro.decimalDegrees(103, 50, 55.f);
+  
   astro.setLatLong(latitude, longitude);
 
   // Init bluetooth
