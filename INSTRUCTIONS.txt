@@ -1,0 +1,32 @@
+There are 2 main screens, Main Menu and Planet Information.
+
+Main Menu buttons:
+Top left     - Back
+Top right    - Select
+Bottom left  - Previous Planet
+Bottom right - Next Planet
+
+Planet Information buttons:
+Top left     - Back
+Top right    - N/A
+Bottom left  - Decrement time offset (-10mins)
+Bottom right - Increment time offset (+10mins)
+
+Planet Information guide:
+- Top left
+32x32 Image of selected planet
+
+- Bottom left
+A: Azimuth (Compass bearings 0-359°, 0 being true north)
+E: Altitude (Elevation -90-0°, 0-90°, 0 being horizon)
+Current Time (hh:mm) with offset up to 1 hour.
+
+- Right
+Planet Name with green/red box depending on whether its above horizon.
+
+Direction: North/South/East/West, the direction to see the planet in the sky. (Green = above horizon, Red = below horizon)
+
+Rise/Set times: When the planet will rise/set, in hh:mm.
+Rise time highlighted if currently below horizon but will rise later in the day.
+Set time highlighted if currently above horizon and will set at the specified time.
+Neither highlighted if currently below horizon and will not rise anymore today.
