@@ -2,6 +2,9 @@
    This file contains pixel data for the planet images. All images are 32x32 pixels in size.
    Pixel values are generated from 32x32px images using a python script.
    See: images/img2bytes.py
+
+   Original images of the sun, moon and planets courtesy of NASA.
+   Images are downscaled to 32x32 before running it through the python script.
 */
 
 unsigned char PIX_SUN[] PROGMEM = {

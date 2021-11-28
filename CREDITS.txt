@@ -1,0 +1,16 @@
+====================
+Special thanks to:
+
+SiderealPlanets - Core library for celestial object calculations.
+- https://github.com/DavidArmstrong/SiderealPlanets
+
+TinyZero - Processor board
+- https://tinycircuits.com/products/tinyzero-processor
+
+TinyScreen - Display module
+- https://github.com/TinyCircuits/TinyCircuits-TinyScreen_Lib
+
+TinyShield BLE - Bluetooth Low Energy module
+- https://github.com/TinyCircuits/TinyCircuits-TinyShield-BLE-ASD2116
+
+Original images of the sun, moon and planets courtesy of NASA
