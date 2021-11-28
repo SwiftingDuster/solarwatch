@@ -1,0 +1,31 @@
+==============================================================
+Original images of the sun, moon and planets courtesy of NASA
+==============================================================
+
+sun-GSFC_20171208_Archive_e001661~small.jpg
+- https://images.nasa.gov/details-GSFC_20171208_Archive_e001661.html
+
+mercury-PIA15162-small.jpg
+- https://photojournal.jpl.nasa.gov/catalog/PIA15162
+
+venus-PIA00271-small.jpg
+- https://photojournal.jpl.nasa.gov/catalog/PIA00271
+
+moon-PIA00405~thumb.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia00405
+
+mars-PIA00407-small.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia00407
+
+jupiter-PIA00343-small.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia00343
+
+saturn-PIA05389-small.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia05389
+
+uranus-PIA18182.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia18182
+
+neptune-PIA01492.jpg
+- https://photojournal.jpl.nasa.gov/catalog/pia01492
+
